@@ -1,18 +1,17 @@
 {
-  "name": "loginform",
+  "name": "auth-backend",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
+  "type": "module",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "node server.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.19.0",
-    "express.js": "^1.0.0",
-    "knex": "^0.95.6",
-    "nodemon": "^2.0.7",
-    "pg": "^8.6.0"
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "mongoose": "^7.0.3"
   }
 }

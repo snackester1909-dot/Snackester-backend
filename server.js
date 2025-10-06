@@ -1,78 +1,58 @@
-const express = require('express');
-const path = require('path');
-const bodyParser = require('body-parser');
-const knex = require('knex');
+import express from "express";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import cors from "cors";
+import bcrypt from "bcryptjs";
+import User from "./models/User.js";
 
-const db = knex({
-    client: 'pg',
-    connection: {
-        host: '127.0.0.1',
-        user: 'postgres',
-        password: 'test',
-        database: 'loginformytvideo'
-    }
-})
-
+dotenv.config();
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-let intialPath = path.join(__dirname, "public");
+app.use(express.json());
+app.use(cors({
+  origin: "https://your-github-username.github.io", // replace with your actual GitHub Pages URL
+  methods: ["GET", "POST"]
+}));
 
-app.use(bodyParser.json());
-app.use(express.static(intialPath));
+// MongoDB Connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.log("❌ Database error:", err));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(intialPath, "index.html"));
-})
+// Signup API
+app.post("/signup", async (req, res) => {
+  const { name, email, password } = req.body;
+  if (!name || !email || !password)
+    return res.json({ success: false, message: "All fields required" });
 
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(intialPath, "login.html"));
-})
+  const existing = await User.findOne({ email });
+  if (existing)
+    return res.json({ success: false, message: "Email already registered" });
 
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(intialPath, "register.html"));
-})
+  const hashed = await bcrypt.hash(password, 10);
+  const user = await User.create({ name, email, password: hashed });
 
-app.post('/register-user', (req, res) => {
-    const { name, email, password } = req.body;
+  res.json({ success: true, message: "Signup successful", user: { name: user.name, email: user.email } });
+});
 
-    if(!name.length || !email.length || !password.length){
-        res.json('fill all the fields');
-    } else{
-        db("users").insert({
-            name: name,
-            email: email,
-            password: password
-        })
-        .returning(["name", "email"])
-        .then(data => {
-            res.json(data[0])
-        })
-        .catch(err => {
-            if(err.detail.includes('already exists')){
-                res.json('email already exists');
-            }
-        })
-    }
-})
+// Login API
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.json({ success: false, message: "All fields required" });
 
-app.post('/login-user', (req, res) => {
-    const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user)
+    return res.json({ success: false, message: "User not found" });
 
-    db.select('name', 'email')
-    .from('users')
-    .where({
-        email: email,
-        password: password
-    })
-    .then(data => {
-        if(data.length){
-            res.json(data[0]);
-        } else{
-            res.json('email or password is incorrect');
-        }
-    })
-})
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid)
+    return res.json({ success: false, message: "Incorrect password" });
 
-app.listen(3000, (req, res) => {
-    console.log('listening on port 3000......')
-})
+  res.json({ success: true, message: "Login successful", user: { name: user.name, email: user.email } });
+});
+
+app.get("/", (req, res) => res.send("✅ Backend running successfully"));
+
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

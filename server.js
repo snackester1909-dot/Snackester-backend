@@ -54,7 +54,7 @@ app.post("/signup", async (req, res) => {
 
     // Send OTP via Twilio
     await client.messages.create({
-      body: Your OTP code is ${otp},
+      body: `Your OTP code is ${otp}`,
       from: process.env.TWILIO_PHONE,
       to: phone
     });

@@ -105,6 +105,7 @@ app.get("/profile", authMiddleware, async (req, res) => {
   res.json({ success: true, user });
 });
 
+const PORT = process.env.PORT || 5000;
 
 
 app.listen(PORT, () => {
